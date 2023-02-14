@@ -1,0 +1,2 @@
+docker login -u rohaanoa
+dckr_pat_NZabCYQS5EPfUDuy90czkfGAEqI
