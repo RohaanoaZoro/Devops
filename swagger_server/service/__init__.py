@@ -6,44 +6,67 @@ from tinydb import TinyDB, Query
 
 import connexion
 import six
+import json 
 
 from swagger_server.models.student import Student  # noqa: E501
 from swagger_server import util
+from swagger_server.service.dbconnect import MongoDatabase
+
 
 db_dir_path = tempfile.gettempdir()
 db_file_path = os.path.join(db_dir_path, "students.json")
 student_db = TinyDB(db_file_path)
 
+from pymongo import MongoClient
+colz = MongoDatabase()
+
+import bson
+from bson import ObjectId
+
+
 
 def add(student=None):
-    queries = []
-    query = Query()
-    queries.append(query.first_name == student.first_name)
-    queries.append(query.last_name == student.last_name)
-    query = reduce(lambda a, b: a & b, queries)
-    res = student_db.search(query)
+   
+    temp_dict = {"first_name":student.first_name, "last_name": student.last_name}
+
+    res = colz.find_one(temp_dict)
     if res:
         return 'already exists', 409
 
-    doc_id = student_db.insert(student.to_dict())
-    student.student_id = doc_id
-    return student.student_id
+
+    colz.insert_one(student.to_dict())
+
+    res = colz.find_one(temp_dict)
+    if res:
+        return str(res["_id"])
+    else: 
+        return 'could not add to mongo', 400
 
 
 def get_by_id(student_id=None, subject=None):
-    student = student_db.get(doc_id=int(student_id))
-    if not student:
+    if bson.objectid.ObjectId.is_valid(student_id):
+
+        temp_dict = {"_id": ObjectId(student_id)}
+        res = colz.find_one(temp_dict)
+        if res:
+            return str(res)
+        else:
+            return 'not found', 404
+    else:
         return 'not found', 404
-    student['student_id'] = student_id
-    print(student)
-    return student
 
 
 def delete(student_id=None):
-    print("Delete called", student_id)
-    student = student_db.get(doc_id=int(student_id))
-    if not student:
-        return 'not found', 404
-    student_db.remove(doc_ids=[int(student_id)])
-    return student_id
+    temp_dict = {"_id": ObjectId(student_id)}
+    res = colz.find_one(temp_dict)
+    if not res:
+        return 'not found', 404    
+    colz.delete_one(temp_dict)
+
+    res = colz.find_one(temp_dict)
+    if not res:
+        return "Successfully deleted"
+    else: 
+        return 'could not add to mongo', 400
+
 

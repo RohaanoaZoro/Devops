@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-service-lb
+  namespace: default
+  labels:
+    name: student-service-lb
+spec:
+  type: LoadBalancer
+  ports:
+    - name: student-service-lb-port
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: student-service
