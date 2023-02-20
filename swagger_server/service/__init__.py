@@ -44,12 +44,19 @@ def add(student=None):
 
 
 def get_by_id(student_id=None, subject=None):
+
+    response = {}
     if bson.objectid.ObjectId.is_valid(student_id):
 
         temp_dict = {"_id": ObjectId(student_id)}
         res = colz.find_one(temp_dict)
         if res:
-            return str(res)
+            return {
+                'student_id': str(res["_id"]),
+                'first_name':res['first_name'],
+                'last_name': res['last_name'],
+                'grade_records': res['grade_records']
+            }
         else:
             return 'not found', 404
     else:
@@ -65,7 +72,7 @@ def delete(student_id=None):
 
     res = colz.find_one(temp_dict)
     if not res:
-        return "Successfully deleted"
+        return str(student_id)
     else: 
         return 'could not add to mongo', 400
 
